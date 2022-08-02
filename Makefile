@@ -1,4 +1,5 @@
-LINUX_TARGETS = linux/amd64 linux/386
+TARGETS = darwin/amd64 darwin/arm64 linux/amd64 linux/386 windows/amd64 windows/386
+
 VERSION ?= dev
 GITHUB_SHA ?= $(shell git rev-parse HEAD)
 BUILD_TIME = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ" | tr -d '\n')
@@ -53,3 +54,27 @@ build:
 clean:
 	@rm -f ./jumbler
 	@rm -rf ./bin/*
+
+release: LDFLAGS += -X $(PKG)/pkg/api.GitCommit=$(GITHUB_SHA)
+release: LDFLAGS += -X $(PKG)/pkg/api.BuildTime=$(BUILD_TIME)
+release: LDFLAGS += -X $(PKG)/pkg/api.GoVersion=$(GO_VERSION)
+release: LDFLAGS += -X $(PKG)/pkg/api.Version=$(VERSION)
+release:
+	@echo "Building binaries..."
+	@gox \
+		-osarch "$(TARGETS)" \
+		-ldflags "$(LDFLAGS)" \
+		-output "./bin/jumbler_{{.OS}}_{{.Arch}}"
+
+	@echo "Building ARM binaries..."
+	GOOS=linux GOARCH=arm GOARM=5 go build -ldflags "$(LDFLAGS)" -o "./bin/jumbler_linux_arm_v5"
+
+	@echo "Building ARM64 binaries..."
+	GOOS=linux GOARCH=arm64 GOARM=7 go build -ldflags "$(LDFLAGS)" -o "./bin/jumbler_linux_arm64_v7"
+
+	@echo "\nPackaging binaries...\n"
+	@./script/package.sh
+
+setup:
+	go install github.com/mitchellh/gox@v1.0.1
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2
