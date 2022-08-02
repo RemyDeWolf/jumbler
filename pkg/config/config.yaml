@@ -1,0 +1,8 @@
+# This config represents all the user-configurable settings
+
+# which path to encrypt
+path: .
+
+# use ext to only change files ending with this extension
+# ext: ".pdf"
+# ext: .png

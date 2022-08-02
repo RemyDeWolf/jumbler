@@ -1,0 +1,69 @@
+name: checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  GO_VERSION: 1.18
+
+jobs:
+  go-test:
+    name: go test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: make test
+
+  go-fmt:
+    name: go fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: go mod download
+      - run: script/check_formatting.sh
+
+  go-mod-tidy:
+    name: go mod tidy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: go mod download
+      - run: go mod tidy -go=${{ env.GO_VERSION }}
+      - name: "Check go.mod and go.sum changed"
+        run: |
+          git diff --quiet go.mod
+          go_mod_changed=$?
+          git diff --quiet go.sum
+          go_sum_changed=$?
+          if [[ $go_mod_changed -gt 0 || $go_sum_changed -gt 0 ]]; then exit 1; fi
+
+  golangci-lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - uses: actions/checkout@v3
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.46.2
