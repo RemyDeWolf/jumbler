@@ -8,6 +8,9 @@
 Jumbler can password encrypt and decrypt a large number of file names.  
 Because it only encrypts the file names, not their content, it is really fast!
 
+
+![jumblr diagram](./diagram.png)
+
 # When to use Jumbler?
 
 If you have files that you want to protect but data encryption is not an option (too slow, limited permission).  
